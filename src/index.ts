@@ -1,43 +1,41 @@
-import AgentAPI from 'apminsight';
+import AgentAPI from "apminsight";
 AgentAPI.config()
 
-import express, { Request, Response} from 'express';
-import subjectsRouter from "./routes/subjects.js";
+import express from 'express';
 import cors from "cors";
-import securityMiddleware from './middleware/security.js';
+
+import subjectsRouter from "./routes/subjects.js";
+import usersRouter from "./routes/users.js";
+import classesRouter from "./routes/classes.js";
+import securityMiddleware from "./middleware/security.js";
 import {toNodeHandler} from "better-auth/node";
-import { auth } from './lib/auth.js';
+import {auth} from "./lib/auth.js";
 
 const app = express();
 const PORT = 8000;
 
-const frontendUrl = process.env.FRONTEND_URL;
-
-if (!frontendUrl) {
-  throw new Error("FRONTEND_URL is required");
-}
+if (!process.env.FRONTEND_URL) throw new Error('FRONTEND_URL is not set in .env file');
 
 app.use(cors({
-  origin: frontendUrl,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}))
 
-app.all('/api/auth/*splat', toNodeHandler(auth));
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
-// Middleware to parse incoming JSON requests
 app.use(express.json());
+
+app.use('/api/subjects', subjectsRouter)
+app.use('/api/users', usersRouter)
+app.use('/api/classes', classesRouter)
 
 app.use(securityMiddleware);
 
-app.use('/api/subjects', subjectsRouter);
-
-// Root GET route
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).send("Welcome to the TypeScript Express Server!");
+app.get('/', (req, res) => {
+  res.send('Hello, welcome to the Classroom API!');
 });
 
-// Start the server
 app.listen(PORT, () => {
-  console.log(`⚡️ Server is running at http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
